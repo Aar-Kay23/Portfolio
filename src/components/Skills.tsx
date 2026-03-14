@@ -1,23 +1,11 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 
 const skillGroups = [
-  {
-    label: "Languages",
-    items: ["Python", "C++", "SQL"],
-  },
-  {
-    label: "ML & CV",
-    items: ["YOLO", "OpenCV", "PyTorch", "TensorFlow", "Scikit-learn", "Object Tracking", "Video Analytics"],
-  },
-  {
-    label: "Backend & AI Systems",
-    items: ["FastAPI", "REST APIs", "Celery", "Redis", "LangChain", "LangGraph"],
-  },
-  {
-    label: "Cloud, Data & Infra",
-    items: ["Amazon SQS", "GCP (BigQuery, Cloud Composer)", "Apache Airflow", "PostgreSQL", "MongoDB", "Git", "Docker"],
-  },
+  { label: "Languages", items: ["Python", "C++", "SQL"] },
+  { label: "ML & CV", items: ["YOLO", "OpenCV", "PyTorch", "TensorFlow", "Scikit-learn", "Object Tracking", "Video Analytics"] },
+  { label: "Backend & AI Systems", items: ["FastAPI", "REST APIs", "Celery", "Redis", "LangChain", "LangGraph"] },
+  { label: "Cloud, Data & Infra", items: ["Amazon SQS", "GCP (BigQuery, Cloud Composer)", "Apache Airflow", "PostgreSQL", "MongoDB", "Git", "Docker"] },
 ];
 
 const masteryNotes: Record<string, string> = {
@@ -48,58 +36,77 @@ const masteryNotes: Record<string, string> = {
 
 export default function Skills() {
   const [activeSkill, setActiveSkill] = useState<string | null>(null);
+  const [mouse, setMouse] = useState({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleMove = (e: MouseEvent) => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      setMouse({
+        x: ((e.clientX - rect.left) / rect.width - 0.5) * 2,
+        y: ((e.clientY - rect.top) / rect.height - 0.5) * 2,
+      });
+    };
+    const el = containerRef.current;
+    el?.addEventListener("mousemove", handleMove);
+    return () => el?.removeEventListener("mousemove", handleMove);
+  }, []);
 
   return (
-    <section id="skills" className="section-padding">
-      <div className="max-w-5xl mx-auto">
+    <section id="skills" className="py-10 md:py-14 px-4 md:px-8">
+      <div className="max-w-5xl mx-auto" ref={containerRef}>
         <motion.h2
-          className="text-2xl sm:text-3xl font-display font-bold text-foreground mb-12 text-center"
-          initial={{ opacity: 0, y: 30 }}
+          className="text-xl sm:text-2xl font-display font-bold text-foreground mb-8 text-center"
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
           Technical <span className="text-gradient-teal">Skills</span>
         </motion.h2>
 
-        <div className="grid gap-8 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2">
           {skillGroups.map((group, gi) => (
             <motion.div
               key={group.label}
-              className="glass-card p-6"
-              initial={{ opacity: 0, y: 30 }}
+              className="glass-card p-4 sm:p-5"
+              initial={{ opacity: 0, y: 25 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: gi * 0.1 }}
+              transition={{ delay: gi * 0.08 }}
+              style={{
+                transform: `translate(${mouse.x * (gi % 2 === 0 ? -3 : 3)}px, ${mouse.y * -2}px)`,
+                transition: "transform 0.3s ease-out",
+              }}
             >
-              <h3 className="text-sm font-display font-semibold text-primary mb-4 uppercase tracking-wider">
+              <h3 className="text-xs font-display font-semibold text-primary mb-3 uppercase tracking-wider">
                 {group.label}
               </h3>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 {group.items.map((skill) => (
                   <motion.button
                     key={skill}
-                    className={`px-3 py-1.5 rounded-full text-sm font-body border transition-all cursor-pointer ${
+                    className={`px-2.5 py-1 rounded-full text-xs font-body border transition-all cursor-pointer ${
                       activeSkill === skill
-                        ? "border-primary bg-primary/15 text-primary"
+                        ? "border-primary bg-primary/15 text-primary glow-teal"
                         : "border-border/60 text-muted-foreground hover:border-primary/40 hover:text-foreground"
                     }`}
-                    whileHover={{ scale: 1.05, y: -2 }}
-                    whileTap={{ scale: 0.97 }}
+                    whileHover={{ scale: 1.08, y: -3 }}
+                    whileTap={{ scale: 0.95 }}
                     onClick={() => setActiveSkill(activeSkill === skill ? null : skill)}
-                    aria-label={`Skill: ${skill}`}
+                    aria-label={`Skill: ${skill}${masteryNotes[skill] ? ` — ${masteryNotes[skill]}` : ""}`}
                   >
                     {skill}
                   </motion.button>
                 ))}
               </div>
-              {/* Mastery note */}
               {group.items.some((s) => s === activeSkill) && activeSkill && masteryNotes[activeSkill] && (
                 <motion.p
-                  className="mt-3 text-xs text-primary/80 font-body"
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
+                  className="mt-2.5 text-[11px] text-primary/80 font-body border-l-2 border-primary/30 pl-2"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
                 >
-                  ✦ {masteryNotes[activeSkill]}
+                  {masteryNotes[activeSkill]}
                 </motion.p>
               )}
             </motion.div>
