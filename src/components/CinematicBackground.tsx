@@ -136,43 +136,44 @@ function BackgroundParticles({ progress }: { progress: number }) {
   );
 }
 
-/* ─── Mid-layer data streams (curved teal lines) ─── */
+/* ─── Mid-layer data streams (merged into single LineSegments for perf) ─── */
 function DataStreams({ progress }: { progress: number }) {
-  const linesRef = useRef<THREE.Group>(null);
+  const groupRef = useRef<THREE.Group>(null);
 
-  const curves = useMemo(() =>
-    Array.from({ length: MID_LINE_COUNT }, () => {
+  const geometry = useMemo(() => {
+    const allPoints: THREE.Vector3[] = [];
+    for (let c = 0; c < MID_LINE_COUNT; c++) {
       const startX = (Math.random() - 0.5) * 30;
       const startY = (Math.random() - 0.5) * 18;
       const startZ = (Math.random() - 0.5) * 8 - 4;
-      const points = [];
+      const curvePoints: THREE.Vector3[] = [];
       for (let j = 0; j < 6; j++) {
-        points.push(new THREE.Vector3(
+        curvePoints.push(new THREE.Vector3(
           startX + j * (Math.random() * 1.5 - 0.75),
           startY + j * (Math.random() * 0.8 - 0.4),
           startZ + j * 0.3
         ));
       }
-      return new THREE.CatmullRomCurve3(points);
-    }),
-  []);
+      const curve = new THREE.CatmullRomCurve3(curvePoints);
+      const pts = curve.getPoints(12);
+      for (let k = 0; k < pts.length - 1; k++) {
+        allPoints.push(pts[k], pts[k + 1]);
+      }
+    }
+    const geo = new THREE.BufferGeometry().setFromPoints(allPoints);
+    return geo;
+  }, []);
 
-  useFrame(({ clock }) => {
-    if (!linesRef.current) return;
-    linesRef.current.position.y = progress * 0.06 * 50;
+  useFrame(() => {
+    if (!groupRef.current) return;
+    groupRef.current.position.y = progress * 0.06 * 50;
   });
 
   return (
-    <group ref={linesRef}>
-      {curves.map((curve, i) => {
-        const pts = curve.getPoints(20);
-        const geo = new THREE.BufferGeometry().setFromPoints(pts);
-        return (
-          <line key={i} geometry={geo}>
-            <lineBasicMaterial color="#00BFA6" transparent opacity={0.05 + (i % 5) * 0.01} />
-          </line>
-        );
-      })}
+    <group ref={groupRef}>
+      <lineSegments geometry={geometry}>
+        <lineBasicMaterial color="#00BFA6" transparent opacity={0.05} />
+      </lineSegments>
     </group>
   );
 }
