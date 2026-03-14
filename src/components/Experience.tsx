@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Briefcase, MapPin, Calendar, X } from "lucide-react";
+import { Briefcase, MapPin, Calendar, X, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Role {
   company: string;
@@ -15,11 +15,11 @@ const roles: Role[] = [
     company: "Prismberry Technologies",
     title: "Software Engineer Gen-AI",
     location: "Noida",
-    period: "June 2025 – Present",
+    period: "Jun 2025 – Present",
     bullets: [
-      "Built VisionIQ: a production video analytics platform processing multi-camera RTSP streams in real-time producing footfall, crowd density, gender/age estimation, restricted-zone access, PPE detection, fire/anomaly alerts using YOLO and custom CV models.",
-      "Designed an event-driven pipeline with SQS, FastAPI, PostgreSQL handling thousands of detections/day; integrated AI chatbot for natural-language surveillance insights (reduced manual effort ~40%).",
-      "Developed a scalable email platform with FastAPI, PostgreSQL, MongoDB Atlas, JWT RBAC, Celery+Redis for async dispatch and Together AI real-time summarization.",
+      "Built VisionIQ: real-time multi-camera RTSP video analytics (YOLO + custom CV); footfall, crowd density, PPE, fire/anomaly alerts.",
+      "Event-driven pipeline: SQS + FastAPI + PostgreSQL; integrated AI chatbot for natural-language surveillance queries (↓ manual effort ~40%).",
+      "Scalable email platform: FastAPI + PostgreSQL + MongoDB Atlas + Celery + Redis; Together AI real-time summarization.",
     ],
   },
   {
@@ -28,8 +28,8 @@ const roles: Role[] = [
     location: "Noida",
     period: "Feb 2025 – May 2025",
     bullets: [
-      "Deployed 15+ automated ETL pipelines with Apache Airflow and Cloud Composer on GCP; processed 100K+ structured records in BigQuery/Postgres; reduced manual effort ~15%.",
-      "Built ML models (SVM, Random Forest, Linear Regression) using Scikit-learn achieving up to 87% classification accuracy.",
+      "Deployed 15+ ETL pipelines via Apache Airflow & GCP Cloud Composer; processed 100K+ records (BigQuery/Postgres).",
+      "Built ML models (SVM / Random Forest / Linear Regression) using Scikit-learn → up to 87% accuracy.",
     ],
   },
 ];
@@ -37,42 +37,56 @@ const roles: Role[] = [
 export default function Experience() {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
+  const handleKey = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === "ArrowRight" && (activeIndex === null || activeIndex < roles.length - 1)) {
+      setActiveIndex(prev => prev === null ? 0 : prev + 1);
+    } else if (e.key === "ArrowLeft" && activeIndex !== null && activeIndex > 0) {
+      setActiveIndex(prev => (prev ?? 1) - 1);
+    } else if (e.key === "Escape") {
+      setActiveIndex(null);
+    }
+  }, [activeIndex]);
+
   return (
-    <section id="experience" className="section-padding">
+    <section id="experience" className="py-10 md:py-14 px-4 md:px-8" onKeyDown={handleKey}>
       <div className="max-w-5xl mx-auto">
         <motion.h2
-          className="text-2xl sm:text-3xl font-display font-bold text-foreground mb-12 text-center"
-          initial={{ opacity: 0, y: 30 }}
+          className="text-xl sm:text-2xl font-display font-bold text-foreground mb-8 text-center"
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
           Work <span className="text-gradient-teal">Experience</span>
         </motion.h2>
 
-        {/* Horizontal timeline */}
+        {/* Timeline */}
         <div className="relative">
-          {/* Timeline line */}
-          <div className="hidden md:block absolute top-[60px] left-0 right-0 h-px bg-border" />
+          {/* Rail line */}
+          <div className="hidden md:block absolute top-[52px] left-[10%] right-[10%] h-[2px] bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
 
-          <div className="flex flex-col md:flex-row gap-6 md:gap-4 justify-center">
+          {/* Keyboard nav hint */}
+          <div className="hidden md:flex justify-center mb-2 gap-1 text-[10px] text-muted-foreground/50">
+            <ChevronLeft className="w-3 h-3" /> <ChevronRight className="w-3 h-3" /> Navigate
+          </div>
+
+          <div className="flex flex-col md:flex-row gap-4 md:gap-6 justify-center">
             {roles.map((role, i) => (
               <motion.div
                 key={i}
                 className="flex-1 max-w-md"
-                initial={{ opacity: 0, y: 40 }}
+                initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.15 }}
+                transition={{ delay: i * 0.12 }}
               >
                 {/* Node */}
-                <div className="hidden md:flex justify-center mb-4">
+                <div className="hidden md:flex justify-center mb-3">
                   <button
                     onClick={() => setActiveIndex(activeIndex === i ? null : i)}
-                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setActiveIndex(activeIndex === i ? null : i); }}
-                    className={`w-5 h-5 rounded-full border-2 transition-all cursor-pointer ${
+                    className={`w-4 h-4 rounded-full border-2 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-background ${
                       activeIndex === i
-                        ? "border-primary bg-primary glow-teal scale-125"
-                        : "border-primary/50 bg-background hover:border-primary hover:scale-110"
+                        ? "border-primary bg-primary glow-teal scale-150"
+                        : "border-primary/40 bg-background hover:border-primary hover:scale-125"
                     }`}
                     aria-label={`Expand details for ${role.company}`}
                   />
@@ -80,20 +94,21 @@ export default function Experience() {
 
                 {/* Card */}
                 <motion.div
-                  className="glass-card p-5 cursor-pointer hover:border-primary/30 transition-colors"
-                  whileHover={{ y: -4 }}
+                  className={`glass-card p-4 cursor-pointer transition-all ${
+                    activeIndex === i ? "border-primary/40 glow-teal" : "hover:border-primary/20"
+                  }`}
+                  whileHover={{ y: -3, scale: 1.01 }}
                   onClick={() => setActiveIndex(activeIndex === i ? null : i)}
                   role="button"
                   tabIndex={0}
-                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setActiveIndex(activeIndex === i ? null : i); }}
                   aria-expanded={activeIndex === i}
                 >
-                  <div className="flex items-center gap-2 text-primary mb-1">
-                    <Briefcase className="w-4 h-4" />
-                    <span className="text-sm font-display font-semibold">{role.company}</span>
+                  <div className="flex items-center gap-2 text-primary mb-0.5">
+                    <Briefcase className="w-3.5 h-3.5" />
+                    <span className="text-xs font-display font-semibold">{role.company}</span>
                   </div>
                   <p className="text-sm font-display font-medium text-foreground">{role.title}</p>
-                  <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-3 mt-1.5 text-[11px] text-muted-foreground">
                     <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{role.location}</span>
                     <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{role.period}</span>
                   </div>
@@ -107,27 +122,28 @@ export default function Experience() {
         <AnimatePresence>
           {activeIndex !== null && (
             <motion.div
-              className="glass-card p-6 mt-8 relative"
-              initial={{ opacity: 0, y: 20, height: 0 }}
-              animate={{ opacity: 1, y: 0, height: "auto" }}
-              exit={{ opacity: 0, y: 10, height: 0 }}
-              transition={{ duration: 0.3 }}
+              className="glass-card p-5 mt-4 relative border-primary/20"
+              initial={{ opacity: 0, y: 15, scaleY: 0.95 }}
+              animate={{ opacity: 1, y: 0, scaleY: 1 }}
+              exit={{ opacity: 0, y: 10, scaleY: 0.95 }}
+              transition={{ duration: 0.25 }}
+              style={{ transformOrigin: "top" }}
             >
               <button
-                className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
+                className="absolute top-3 right-3 text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 rounded"
                 onClick={() => setActiveIndex(null)}
                 aria-label="Close details"
               >
                 <X className="w-4 h-4" />
               </button>
-              <h3 className="font-display font-semibold text-foreground mb-1">
+              <h3 className="font-display font-semibold text-foreground text-sm mb-0.5">
                 {roles[activeIndex].title}
               </h3>
-              <p className="text-sm text-primary mb-4">{roles[activeIndex].company} — {roles[activeIndex].period}</p>
-              <ul className="space-y-3">
+              <p className="text-xs text-primary mb-3">{roles[activeIndex].company} — {roles[activeIndex].period}</p>
+              <ul className="space-y-2">
                 {roles[activeIndex].bullets.map((bullet, bi) => (
                   <li key={bi} className="text-sm text-muted-foreground leading-relaxed flex gap-2">
-                    <span className="text-primary mt-1 shrink-0">▸</span>
+                    <span className="text-primary mt-0.5 shrink-0">▸</span>
                     <span>{bullet}</span>
                   </li>
                 ))}
