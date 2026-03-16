@@ -25,11 +25,15 @@ const hasWebGL = WebGLCheck();
 const Index = () => {
   return (
     <div className="min-h-screen bg-background relative">
-      {/* 3D Background with scroll-driven camera */}
       {hasWebGL ? (
-        <Suspense fallback={
-          <div className="fixed inset-0 -z-10" style={{ background: "radial-gradient(ellipse at 50% 30%, #141f30 0%, #0a1018 70%)" }} />
-        }>
+        <Suspense
+          fallback={
+            <div
+              className="fixed inset-0 -z-10"
+              style={{ background: "radial-gradient(ellipse at 50% 30%, #141f30 0%, #0a1018 70%)" }}
+            />
+          }
+        >
           <CinematicBackground />
         </Suspense>
       ) : (
@@ -55,7 +59,6 @@ const Index = () => {
 
       <Footer />
 
-      {/* Scroll progress indicator */}
       <ScrollProgress />
     </div>
   );
@@ -65,9 +68,8 @@ function ScrollProgress() {
   return (
     <div className="fixed top-0 left-0 right-0 z-50 h-[2px]">
       <div
-        className="h-full bg-primary/60 transition-none"
+        className="h-full bg-primary/50 transition-none"
         id="scroll-progress"
-        style={{ width: "0%" }}
         ref={(el) => {
           if (!el) return;
           const update = () => {
