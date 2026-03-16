@@ -1,127 +1,193 @@
-import { useRef, useMemo, useEffect, useState } from "react";
+import { useRef, useMemo, useEffect, useState, useCallback } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
-const BG_PARTICLE_COUNT = 700;
-const MID_LINE_COUNT = 280;
-const SPARK_COUNT = 40;
-const NODE_COUNT = 50;
+/* ─── Chapter scroll segments ─── */
+const CHAPTERS = [
+  { name: "hero", start: 0, end: 0.18 },
+  { name: "about", start: 0.18, end: 0.28 },
+  { name: "skills", start: 0.28, end: 0.45 },
+  { name: "experience", start: 0.45, end: 0.62 },
+  { name: "projects", start: 0.62, end: 0.78 },
+  { name: "education", start: 0.78, end: 0.88 },
+  { name: "contact", start: 0.88, end: 1.0 },
+];
 
-/* ─── Scroll-driven camera ─── */
+function getChapter(p: number) {
+  return CHAPTERS.find((c) => p >= c.start && p < c.end) ?? CHAPTERS[CHAPTERS.length - 1];
+}
+
+/* ─── Scroll-driven cinematic camera ─── */
 function ScrollCamera({ progress }: { progress: number }) {
   const { camera } = useThree();
+  const target = useRef({ x: 0, y: 1.2, z: 6, rotX: 0, rotY: 0 });
 
   useFrame(() => {
     const p = progress;
-    // Hero (0–0.35): cam at z6 → z3
-    // Skills (0.35–0.55): dolly z3→1.5, rotateY -6°
-    // Timeline (0.55–0.75): pan up y+0.8, z2.5
-    // Projects+ (0.75–1): settle z3, y0
-    let z: number, y: number, rotY: number;
+    const t = target.current;
 
-    if (p < 0.35) {
-      const t = p / 0.35;
-      z = THREE.MathUtils.lerp(6, 3, t);
-      y = THREE.MathUtils.lerp(1.2, 0.8, t);
-      rotY = 0;
-    } else if (p < 0.55) {
-      const t = (p - 0.35) / 0.2;
-      z = THREE.MathUtils.lerp(3, 1.5, t);
-      y = THREE.MathUtils.lerp(0.8, 0.4, t);
-      rotY = THREE.MathUtils.lerp(0, -0.105, t); // ~-6°
-    } else if (p < 0.75) {
-      const t = (p - 0.55) / 0.2;
-      z = THREE.MathUtils.lerp(1.5, 2.5, t);
-      y = THREE.MathUtils.lerp(0.4, 1.2, t);
-      rotY = THREE.MathUtils.lerp(-0.105, -0.03, t);
+    // Chapter-based camera keyframes
+    if (p < 0.18) {
+      // Hero: wide establishing shot, slow zoom
+      const s = p / 0.18;
+      t.z = THREE.MathUtils.lerp(7, 5.5, s);
+      t.y = THREE.MathUtils.lerp(1.4, 1.0, s);
+      t.x = THREE.MathUtils.lerp(0, 0.3, s);
+      t.rotY = THREE.MathUtils.lerp(0, 0.015, s);
+      t.rotX = 0;
+    } else if (p < 0.28) {
+      // About: gentle push forward
+      const s = (p - 0.18) / 0.1;
+      t.z = THREE.MathUtils.lerp(5.5, 4.5, s);
+      t.y = THREE.MathUtils.lerp(1.0, 0.8, s);
+      t.x = THREE.MathUtils.lerp(0.3, -0.2, s);
+      t.rotY = THREE.MathUtils.lerp(0.015, -0.02, s);
+      t.rotX = 0;
+    } else if (p < 0.45) {
+      // Skills: dramatic close-up, slight tilt
+      const s = (p - 0.28) / 0.17;
+      t.z = THREE.MathUtils.lerp(4.5, 2.0, s);
+      t.y = THREE.MathUtils.lerp(0.8, 0.3, s);
+      t.x = THREE.MathUtils.lerp(-0.2, 0.5, s);
+      t.rotY = THREE.MathUtils.lerp(-0.02, -0.105, s); // -6°
+      t.rotX = THREE.MathUtils.lerp(0, 0.03, s);
+    } else if (p < 0.62) {
+      // Experience: orbit around timeline
+      const s = (p - 0.45) / 0.17;
+      t.z = THREE.MathUtils.lerp(2.0, 3.0, s);
+      t.y = THREE.MathUtils.lerp(0.3, 1.0, s);
+      t.x = THREE.MathUtils.lerp(0.5, -0.4, s);
+      t.rotY = THREE.MathUtils.lerp(-0.105, 0.04, s);
+      t.rotX = THREE.MathUtils.lerp(0.03, -0.02, s);
+    } else if (p < 0.78) {
+      // Projects: pull back for overview, then push into cards
+      const s = (p - 0.62) / 0.16;
+      t.z = THREE.MathUtils.lerp(3.0, 2.5, s);
+      t.y = THREE.MathUtils.lerp(1.0, 1.4, s);
+      t.x = THREE.MathUtils.lerp(-0.4, 0.2, s);
+      t.rotY = THREE.MathUtils.lerp(0.04, -0.03, s);
+      t.rotX = THREE.MathUtils.lerp(-0.02, 0.02, s);
+    } else if (p < 0.88) {
+      // Education: gentle settle
+      const s = (p - 0.78) / 0.1;
+      t.z = THREE.MathUtils.lerp(2.5, 3.5, s);
+      t.y = THREE.MathUtils.lerp(1.4, 0.8, s);
+      t.x = THREE.MathUtils.lerp(0.2, 0, s);
+      t.rotY = THREE.MathUtils.lerp(-0.03, 0, s);
+      t.rotX = THREE.MathUtils.lerp(0.02, 0, s);
     } else {
-      const t = (p - 0.75) / 0.25;
-      z = THREE.MathUtils.lerp(2.5, 3, t);
-      y = THREE.MathUtils.lerp(1.2, 0.6, t);
-      rotY = THREE.MathUtils.lerp(-0.03, 0, t);
+      // Contact: calm, centered
+      const s = (p - 0.88) / 0.12;
+      t.z = THREE.MathUtils.lerp(3.5, 4.0, s);
+      t.y = THREE.MathUtils.lerp(0.8, 0.5, s);
+      t.x = 0;
+      t.rotY = 0;
+      t.rotX = 0;
     }
 
-    camera.position.z = THREE.MathUtils.lerp(camera.position.z, z, 0.08);
-    camera.position.y = THREE.MathUtils.lerp(camera.position.y, y, 0.08);
-    camera.rotation.y = THREE.MathUtils.lerp(camera.rotation.y, rotY, 0.06);
+    // Smooth interpolation (cinematic easing)
+    camera.position.x = THREE.MathUtils.lerp(camera.position.x, t.x, 0.04);
+    camera.position.y = THREE.MathUtils.lerp(camera.position.y, t.y, 0.04);
+    camera.position.z = THREE.MathUtils.lerp(camera.position.z, t.z, 0.04);
+    camera.rotation.x = THREE.MathUtils.lerp(camera.rotation.x, t.rotX, 0.03);
+    camera.rotation.y = THREE.MathUtils.lerp(camera.rotation.y, t.rotY, 0.03);
   });
 
   return null;
 }
 
-/* ─── Volumetric fog that deepens on scroll ─── */
+/* ─── Volumetric fog that deepens as camera approaches ─── */
 function DynamicFog({ progress }: { progress: number }) {
   const { scene } = useThree();
 
   useFrame(() => {
     if (scene.fog && scene.fog instanceof THREE.Fog) {
-      const nearTarget = THREE.MathUtils.lerp(10, 4, progress);
-      const farTarget = THREE.MathUtils.lerp(30, 14, progress);
-      scene.fog.near = THREE.MathUtils.lerp(scene.fog.near, nearTarget, 0.05);
-      scene.fog.far = THREE.MathUtils.lerp(scene.fog.far, farTarget, 0.05);
+      // Fog thickens in middle chapters (skills/experience) for dramatic depth
+      const chapterDepth = progress < 0.28 ? 0 : progress < 0.62 ? (progress - 0.28) / 0.34 : 1 - (progress - 0.62) / 0.38;
+      const nearTarget = THREE.MathUtils.lerp(12, 3, chapterDepth * 0.8);
+      const farTarget = THREE.MathUtils.lerp(35, 12, chapterDepth * 0.6);
+      scene.fog.near = THREE.MathUtils.lerp(scene.fog.near, nearTarget, 0.03);
+      scene.fog.far = THREE.MathUtils.lerp(scene.fog.far, farTarget, 0.03);
     }
   });
 
   return null;
 }
 
-/* ─── Dynamic lighting that shifts with scroll ─── */
+/* ─── Three-point cinematic lighting with scroll-driven hue shifts ─── */
 function DynamicLights({ progress }: { progress: number }) {
-  const tealRef = useRef<THREE.PointLight>(null);
-  const orangeRef = useRef<THREE.PointLight>(null);
+  const keyRef = useRef<THREE.PointLight>(null);
+  const fillRef = useRef<THREE.PointLight>(null);
   const rimRef = useRef<THREE.PointLight>(null);
+  const warmRef = useRef<THREE.PointLight>(null);
 
-  useFrame(() => {
-    if (tealRef.current) {
-      tealRef.current.intensity = THREE.MathUtils.lerp(0.6, 1.2, progress);
-      tealRef.current.position.x = Math.sin(progress * Math.PI * 2) * 6;
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime() * 0.15;
+
+    if (keyRef.current) {
+      // Key light orbits slowly, intensifies in middle chapters
+      keyRef.current.intensity = THREE.MathUtils.lerp(0.5, 1.6, Math.sin(progress * Math.PI) * 0.5 + 0.5);
+      keyRef.current.position.set(
+        Math.sin(t * 0.3 + progress * 4) * 8,
+        4 + Math.sin(progress * Math.PI) * 2,
+        Math.cos(t * 0.2) * 6
+      );
     }
-    if (orangeRef.current) {
-      orangeRef.current.intensity = THREE.MathUtils.lerp(0.15, 0.5, progress);
-      orangeRef.current.position.y = Math.cos(progress * Math.PI) * 4;
+    if (fillRef.current) {
+      fillRef.current.intensity = THREE.MathUtils.lerp(0.15, 0.4, progress);
+      fillRef.current.position.set(-6, -2 + Math.sin(t * 0.4) * 1.5, 4);
     }
     if (rimRef.current) {
-      rimRef.current.intensity = THREE.MathUtils.lerp(0.1, 0.4, progress);
+      rimRef.current.intensity = THREE.MathUtils.lerp(0.08, 0.5, Math.sin(progress * Math.PI * 1.5) * 0.5 + 0.5);
+      rimRef.current.position.set(Math.cos(t * 0.2) * 5, 3, -6);
+    }
+    if (warmRef.current) {
+      // Warm accent grows stronger in experience/projects chapters
+      const warmth = progress > 0.4 && progress < 0.8 ? (progress - 0.4) / 0.4 : progress >= 0.8 ? 1 - (progress - 0.8) / 0.2 : 0;
+      warmRef.current.intensity = THREE.MathUtils.lerp(0, 0.7, Math.max(0, warmth));
+      warmRef.current.position.set(Math.sin(t * 0.5) * 4, -1, 5);
     }
   });
 
   return (
     <>
-      <ambientLight intensity={0.2} />
-      <pointLight ref={tealRef} position={[5, 4, 5]} color="#00BFA6" intensity={0.6} distance={20} />
-      <pointLight ref={orangeRef} position={[-5, -3, 3]} color="#FF7A59" intensity={0.15} distance={15} />
-      <pointLight ref={rimRef} position={[0, 3, -5]} color="#4dd0e1" intensity={0.1} distance={18} />
+      <ambientLight intensity={0.12} color="#1a2a40" />
+      <pointLight ref={keyRef} color="#00BFA6" distance={25} decay={2} />
+      <pointLight ref={fillRef} color="#4dd0e1" distance={18} decay={2} />
+      <pointLight ref={rimRef} color="#80cbc4" distance={20} decay={2} />
+      <pointLight ref={warmRef} color="#FF7A59" distance={16} decay={2} />
     </>
   );
 }
 
-/* ─── Background particles (distant, slow, low opacity) ─── */
-function BackgroundParticles({ progress }: { progress: number }) {
+/* ─── Background particles: distant star field ─── */
+function BackgroundStars({ progress }: { progress: number }) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const dummy = useMemo(() => new THREE.Object3D(), []);
+  const COUNT = 800;
 
-  const particles = useMemo(() =>
-    Array.from({ length: BG_PARTICLE_COUNT }, () => ({
-      x: (Math.random() - 0.5) * 50,
-      y: (Math.random() - 0.5) * 30,
-      z: (Math.random() - 0.5) * 20 - 12,
-      speed: Math.random() * 0.2 + 0.05,
-      phase: Math.random() * Math.PI * 2,
-      size: Math.random() * 0.015 + 0.008,
-    })),
-  []);
+  const stars = useMemo(
+    () =>
+      Array.from({ length: COUNT }, () => ({
+        x: (Math.random() - 0.5) * 60,
+        y: (Math.random() - 0.5) * 40,
+        z: -(Math.random() * 25 + 8),
+        twinkleSpeed: Math.random() * 2 + 0.5,
+        twinklePhase: Math.random() * Math.PI * 2,
+        size: Math.random() * 0.018 + 0.006,
+      })),
+    []
+  );
 
   useFrame(({ clock }) => {
     if (!meshRef.current) return;
-    const t = clock.getElapsedTime() * 0.06;
-    const parallax = progress * 0.02;
-    particles.forEach((p, i) => {
-      dummy.position.set(
-        p.x + Math.sin(t + p.phase) * 0.15,
-        p.y + Math.cos(t * p.speed + p.phase) * 0.1 + parallax * 50,
-        p.z
-      );
-      dummy.scale.setScalar(p.size);
+    const t = clock.getElapsedTime();
+    const parallaxY = progress * 0.02 * 60;
+
+    stars.forEach((s, i) => {
+      const twinkle = Math.sin(t * s.twinkleSpeed + s.twinklePhase) * 0.4 + 0.6;
+      dummy.position.set(s.x, s.y + parallaxY, s.z);
+      dummy.scale.setScalar(s.size * twinkle);
       dummy.updateMatrix();
       meshRef.current!.setMatrixAt(i, dummy.matrix);
     });
@@ -129,112 +195,119 @@ function BackgroundParticles({ progress }: { progress: number }) {
   });
 
   return (
-    <instancedMesh ref={meshRef} args={[undefined, undefined, BG_PARTICLE_COUNT]}>
+    <instancedMesh ref={meshRef} args={[undefined, undefined, COUNT]}>
       <sphereGeometry args={[1, 4, 4]} />
-      <meshBasicMaterial color="#CBD5E1" transparent opacity={0.06} />
+      <meshBasicMaterial color="#94a3b8" transparent opacity={0.08} />
     </instancedMesh>
   );
 }
 
-/* ─── Mid-layer data streams (merged into single LineSegments for perf) ─── */
-function DataStreams({ progress }: { progress: number }) {
+/* ─── Mid-layer: data stream ribbons (curved, teal-glowing) ─── */
+function DataRibbons({ progress }: { progress: number }) {
   const groupRef = useRef<THREE.Group>(null);
+  const RIBBON_COUNT = 60;
 
-  const geometry = useMemo(() => {
+  const ribbonGeo = useMemo(() => {
     const allPoints: THREE.Vector3[] = [];
-    for (let c = 0; c < MID_LINE_COUNT; c++) {
-      const startX = (Math.random() - 0.5) * 30;
-      const startY = (Math.random() - 0.5) * 18;
-      const startZ = (Math.random() - 0.5) * 8 - 4;
-      const curvePoints: THREE.Vector3[] = [];
-      for (let j = 0; j < 6; j++) {
-        curvePoints.push(new THREE.Vector3(
-          startX + j * (Math.random() * 1.5 - 0.75),
-          startY + j * (Math.random() * 0.8 - 0.4),
-          startZ + j * 0.3
-        ));
+    for (let r = 0; r < RIBBON_COUNT; r++) {
+      const baseX = (Math.random() - 0.5) * 35;
+      const baseY = (Math.random() - 0.5) * 25;
+      const baseZ = (Math.random() - 0.5) * 12 - 3;
+      const pts: THREE.Vector3[] = [];
+      for (let j = 0; j < 10; j++) {
+        pts.push(
+          new THREE.Vector3(
+            baseX + j * (Math.random() * 2 - 1),
+            baseY + j * (Math.random() * 1.2 - 0.6),
+            baseZ + j * 0.4
+          )
+        );
       }
-      const curve = new THREE.CatmullRomCurve3(curvePoints);
-      const pts = curve.getPoints(12);
-      for (let k = 0; k < pts.length - 1; k++) {
-        allPoints.push(pts[k], pts[k + 1]);
+      const curve = new THREE.CatmullRomCurve3(pts);
+      const cPts = curve.getPoints(20);
+      for (let k = 0; k < cPts.length - 1; k++) {
+        allPoints.push(cPts[k], cPts[k + 1]);
       }
     }
-    const geo = new THREE.BufferGeometry().setFromPoints(allPoints);
-    return geo;
+    return new THREE.BufferGeometry().setFromPoints(allPoints);
   }, []);
 
   useFrame(() => {
     if (!groupRef.current) return;
-    groupRef.current.position.y = progress * 0.06 * 50;
+    groupRef.current.position.y = progress * 0.06 * 40;
+    groupRef.current.rotation.z = Math.sin(progress * Math.PI * 0.5) * 0.02;
   });
 
   return (
     <group ref={groupRef}>
-      <lineSegments geometry={geometry}>
-        <lineBasicMaterial color="#00BFA6" transparent opacity={0.05} />
+      <lineSegments geometry={ribbonGeo}>
+        <lineBasicMaterial color="#00BFA6" transparent opacity={0.04} />
       </lineSegments>
     </group>
   );
 }
 
-/* ─── Neural network nodes with connections ─── */
-function NetworkNodes({ progress }: { progress: number }) {
+/* ─── Neural network: nodes with dynamic connections ─── */
+function NeuralNetwork({ progress }: { progress: number }) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const linesRef = useRef<THREE.LineSegments>(null);
   const dummy = useMemo(() => new THREE.Object3D(), []);
+  const NODE_COUNT = 45;
 
-  const positions = useMemo(() =>
-    Array.from({ length: NODE_COUNT }, () => ({
-      x: (Math.random() - 0.5) * 24,
-      y: (Math.random() - 0.5) * 14,
-      z: (Math.random() - 0.5) * 10 - 4,
-      speed: Math.random() * 0.3 + 0.1,
-      phase: Math.random() * Math.PI * 2,
-    })),
-  []);
+  const nodes = useMemo(
+    () =>
+      Array.from({ length: NODE_COUNT }, () => ({
+        x: (Math.random() - 0.5) * 28,
+        y: (Math.random() - 0.5) * 18,
+        z: (Math.random() - 0.5) * 10 - 3,
+        speed: Math.random() * 0.25 + 0.08,
+        phase: Math.random() * Math.PI * 2,
+        pulseSpeed: Math.random() * 1.5 + 0.5,
+      })),
+    []
+  );
 
-  const lineGeometry = useMemo(() => {
+  const lineGeo = useMemo(() => {
     const geo = new THREE.BufferGeometry();
-    const linePositions = new Float32Array(NODE_COUNT * NODE_COUNT * 6);
-    geo.setAttribute("position", new THREE.BufferAttribute(linePositions, 3));
+    const positions = new Float32Array(NODE_COUNT * NODE_COUNT * 6);
+    geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
     return geo;
   }, []);
 
   useFrame(({ clock }) => {
     if (!meshRef.current) return;
-    const t = clock.getElapsedTime() * 0.12;
-    const parallax = progress * 0.06;
+    const t = clock.getElapsedTime() * 0.1;
+    const parallaxY = progress * 0.06 * 30;
+    const currentPos: THREE.Vector3[] = [];
 
-    const currentPositions: THREE.Vector3[] = [];
-    positions.forEach((p, i) => {
-      const x = p.x + Math.sin(t + p.phase) * 0.6;
-      const y = p.y + Math.cos(t * p.speed + p.phase) * 0.5 + parallax * 30;
-      const z = p.z + Math.sin(t * 0.25 + p.phase) * 0.4;
+    nodes.forEach((n, i) => {
+      const pulse = Math.sin(t * n.pulseSpeed + n.phase) * 0.3 + 0.7;
+      const x = n.x + Math.sin(t + n.phase) * 0.7;
+      const y = n.y + Math.cos(t * n.speed + n.phase) * 0.5 + parallaxY;
+      const z = n.z + Math.sin(t * 0.2 + n.phase) * 0.5;
       dummy.position.set(x, y, z);
-      dummy.scale.setScalar(0.05 + Math.sin(t * 2 + p.phase) * 0.01);
+      dummy.scale.setScalar(0.04 + pulse * 0.02);
       dummy.updateMatrix();
       meshRef.current!.setMatrixAt(i, dummy.matrix);
-      currentPositions.push(new THREE.Vector3(x, y, z));
+      currentPos.push(new THREE.Vector3(x, y, z));
     });
     meshRef.current.instanceMatrix.needsUpdate = true;
 
+    // Dynamic connections
     if (linesRef.current) {
       const posAttr = linesRef.current.geometry.getAttribute("position") as THREE.BufferAttribute;
       let idx = 0;
-      for (let i = 0; i < currentPositions.length; i++) {
-        for (let j = i + 1; j < currentPositions.length; j++) {
-          const dist = currentPositions[i].distanceTo(currentPositions[j]);
-          if (dist < 3.5 && idx < NODE_COUNT * NODE_COUNT * 2) {
-            posAttr.setXYZ(idx * 2, currentPositions[i].x, currentPositions[i].y, currentPositions[i].z);
-            posAttr.setXYZ(idx * 2 + 1, currentPositions[j].x, currentPositions[j].y, currentPositions[j].z);
+      const maxDist = 3.2 + progress * 1.5; // connections grow denser as you scroll deeper
+      for (let i = 0; i < currentPos.length && idx < NODE_COUNT * NODE_COUNT; i++) {
+        for (let j = i + 1; j < currentPos.length && idx < NODE_COUNT * NODE_COUNT; j++) {
+          if (currentPos[i].distanceTo(currentPos[j]) < maxDist) {
+            posAttr.setXYZ(idx * 2, currentPos[i].x, currentPos[i].y, currentPos[i].z);
+            posAttr.setXYZ(idx * 2 + 1, currentPos[j].x, currentPos[j].y, currentPos[j].z);
             idx++;
           }
         }
       }
-      for (let k = idx * 2; k < posAttr.count; k++) {
-        posAttr.setXYZ(k, 0, 0, 0);
-      }
+      for (let k = idx * 2; k < posAttr.count; k++) posAttr.setXYZ(k, 0, 0, 0);
       posAttr.needsUpdate = true;
       linesRef.current.geometry.setDrawRange(0, idx * 2);
     }
@@ -243,43 +316,55 @@ function NetworkNodes({ progress }: { progress: number }) {
   return (
     <>
       <instancedMesh ref={meshRef} args={[undefined, undefined, NODE_COUNT]}>
-        <sphereGeometry args={[1, 8, 8]} />
-        <meshStandardMaterial color="#00BFA6" emissive="#00BFA6" emissiveIntensity={0.4} transparent opacity={0.8} />
+        <sphereGeometry args={[1, 6, 6]} />
+        <meshStandardMaterial
+          color="#00BFA6"
+          emissive="#00BFA6"
+          emissiveIntensity={0.5}
+          transparent
+          opacity={0.75}
+        />
       </instancedMesh>
-      <lineSegments ref={linesRef} geometry={lineGeometry}>
-        <lineBasicMaterial color="#00BFA6" transparent opacity={0.1} />
+      <lineSegments ref={linesRef} geometry={lineGeo}>
+        <lineBasicMaterial color="#00BFA6" transparent opacity={0.08} />
       </lineSegments>
     </>
   );
 }
 
-/* ─── Foreground orange sparks that react to interactions ─── */
+/* ─── Foreground orange sparks: pulse on interaction ─── */
 function OrangeSparks({ progress }: { progress: number }) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const dummy = useMemo(() => new THREE.Object3D(), []);
+  const SPARK_COUNT = 45;
 
-  const sparks = useMemo(() =>
-    Array.from({ length: SPARK_COUNT }, () => ({
-      x: (Math.random() - 0.5) * 16,
-      y: (Math.random() - 0.5) * 10,
-      z: (Math.random() - 0.5) * 4 + 1,
-      speed: Math.random() * 0.8 + 0.3,
-      phase: Math.random() * Math.PI * 2,
-    })),
-  []);
+  const sparks = useMemo(
+    () =>
+      Array.from({ length: SPARK_COUNT }, () => ({
+        x: (Math.random() - 0.5) * 18,
+        y: (Math.random() - 0.5) * 12,
+        z: (Math.random() - 0.5) * 4 + 2,
+        speed: Math.random() * 0.6 + 0.2,
+        phase: Math.random() * Math.PI * 2,
+        drift: Math.random() * 0.6 + 0.2,
+      })),
+    []
+  );
 
   useFrame(({ clock }) => {
     if (!meshRef.current) return;
-    const t = clock.getElapsedTime() * 0.3;
-    const parallax = progress * 0.12;
+    const t = clock.getElapsedTime() * 0.25;
+    const parallaxY = progress * 0.12 * 25;
+
     sparks.forEach((s, i) => {
-      const pulse = Math.sin(t * s.speed + s.phase) * 0.5 + 0.5;
+      const pulse = Math.sin(t * s.speed * 2 + s.phase) * 0.5 + 0.5;
+      const breathe = Math.sin(t * 0.3 + s.phase) * s.drift;
       dummy.position.set(
-        s.x + Math.sin(t * 0.5 + s.phase) * 0.8,
-        s.y + Math.cos(t * s.speed * 0.3 + s.phase) * 0.6 + parallax * 30,
-        s.z
+        s.x + Math.sin(t * 0.4 + s.phase) * 1.2,
+        s.y + Math.cos(t * s.speed * 0.3 + s.phase) * 0.8 + parallaxY,
+        s.z + breathe
       );
-      dummy.scale.setScalar(0.02 * pulse + 0.005);
+      dummy.scale.setScalar(0.015 * pulse + 0.005);
       dummy.updateMatrix();
       meshRef.current!.setMatrixAt(i, dummy.matrix);
     });
@@ -288,20 +373,29 @@ function OrangeSparks({ progress }: { progress: number }) {
 
   return (
     <instancedMesh ref={meshRef} args={[undefined, undefined, SPARK_COUNT]}>
-      <sphereGeometry args={[1, 6, 6]} />
-      <meshBasicMaterial color="#FF7A59" transparent opacity={0.6} />
+      <sphereGeometry args={[1, 5, 5]} />
+      <meshBasicMaterial color="#FF7A59" transparent opacity={0.55} />
     </instancedMesh>
   );
 }
 
-/* ─── Holographic grid floor ─── */
-function GridFloor() {
+/* ─── Holographic grid floor with scroll parallax ─── */
+function GridFloor({ progress }: { progress: number }) {
+  const ref = useRef<THREE.GridHelper>(null);
+
+  useFrame(() => {
+    if (!ref.current) return;
+    ref.current.position.y = -8 + progress * 2;
+    (ref.current.material as THREE.Material).opacity = THREE.MathUtils.lerp(0.025, 0.06, Math.sin(progress * Math.PI) * 0.5 + 0.5);
+  });
+
   return (
     <gridHelper
-      args={[60, 60, "#00BFA6", "#00BFA6"]}
-      position={[0, -7, -5]}
-      material-opacity={0.03}
+      ref={ref}
+      args={[80, 80, "#00BFA6", "#00BFA6"]}
+      position={[0, -8, -5]}
       material-transparent={true}
+      material-opacity={0.025}
     />
   );
 }
@@ -314,19 +408,38 @@ export default function CinematicBackground() {
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
     setReducedMotion(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
+    mq.addEventListener("change", onChange);
 
     const handleScroll = () => {
       const scrollH = document.documentElement.scrollHeight - window.innerHeight;
-      if (scrollH > 0) {
-        setScrollProgress(window.scrollY / scrollH);
-      }
+      if (scrollH > 0) setScrollProgress(window.scrollY / scrollH);
     };
-
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      mq.removeEventListener("change", onChange);
+    };
   }, []);
 
-  if (reducedMotion) {
+  // Check low-GPU toggle from localStorage
+  const [lowGPU, setLowGPU] = useState(() => {
+    try { return localStorage.getItem("lowGPU") === "true"; } catch { return false; }
+  });
+
+  useEffect(() => {
+    const handler = () => {
+      try { setLowGPU(localStorage.getItem("lowGPU") === "true"); } catch {}
+    };
+    window.addEventListener("storage", handler);
+    window.addEventListener("lowgpu-toggle", handler);
+    return () => {
+      window.removeEventListener("storage", handler);
+      window.removeEventListener("lowgpu-toggle", handler);
+    };
+  }, []);
+
+  if (reducedMotion || lowGPU) {
     return (
       <div
         className="fixed inset-0 -z-10"
@@ -341,20 +454,20 @@ export default function CinematicBackground() {
   return (
     <div className="fixed inset-0 -z-10" aria-hidden="true">
       <Canvas
-        camera={{ position: [0, 1.2, 6], fov: 45, near: 0.1, far: 1000 }}
+        camera={{ position: [0, 1.4, 7], fov: 45, near: 0.1, far: 1000 }}
         dpr={[1, 1.5]}
         gl={{ antialias: false, alpha: false, powerPreference: "high-performance" }}
         style={{ background: "linear-gradient(180deg, #0F1724 0%, #080d16 40%, #0a1220 100%)" }}
       >
-        <fog attach="fog" args={["#0F1724", 10, 30]} />
+        <fog attach="fog" args={["#0F1724", 12, 35]} />
         <ScrollCamera progress={scrollProgress} />
         <DynamicFog progress={scrollProgress} />
         <DynamicLights progress={scrollProgress} />
-        <BackgroundParticles progress={scrollProgress} />
-        <DataStreams progress={scrollProgress} />
-        <NetworkNodes progress={scrollProgress} />
+        <BackgroundStars progress={scrollProgress} />
+        <DataRibbons progress={scrollProgress} />
+        <NeuralNetwork progress={scrollProgress} />
         <OrangeSparks progress={scrollProgress} />
-        <GridFloor />
+        <GridFloor progress={scrollProgress} />
       </Canvas>
     </div>
   );

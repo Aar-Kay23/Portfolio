@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 const skillGroups = [
   { label: "Languages", items: ["Python", "C++", "SQL"] },
@@ -54,10 +54,10 @@ export default function Skills() {
   }, []);
 
   return (
-    <section id="skills" className="py-10 md:py-14 px-4 md:px-8">
+    <section id="skills" className="py-8 md:py-10 px-4 md:px-8">
       <div className="max-w-5xl mx-auto" ref={containerRef}>
         <motion.h2
-          className="text-xl sm:text-2xl font-display font-bold text-foreground mb-8 text-center"
+          className="text-lg sm:text-xl font-display font-bold text-foreground mb-6 text-center"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -65,34 +65,34 @@ export default function Skills() {
           Technical <span className="text-gradient-teal">Skills</span>
         </motion.h2>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-2">
           {skillGroups.map((group, gi) => (
             <motion.div
               key={group.label}
-              className="glass-card p-4 sm:p-5"
-              initial={{ opacity: 0, y: 25 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              className="glass-card p-3.5 sm:p-4 group/card hover:border-primary/25 transition-colors"
+              initial={{ opacity: 0, y: 25, filter: "blur(6px)" }}
+              whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
               viewport={{ once: true }}
-              transition={{ delay: gi * 0.08 }}
+              transition={{ delay: gi * 0.06, duration: 0.6 }}
               style={{
-                transform: `translate(${mouse.x * (gi % 2 === 0 ? -3 : 3)}px, ${mouse.y * -2}px)`,
-                transition: "transform 0.3s ease-out",
+                transform: `translate(${mouse.x * (gi % 2 === 0 ? -2 : 2)}px, ${mouse.y * -1.5}px)`,
+                transition: "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
               }}
             >
-              <h3 className="text-xs font-display font-semibold text-primary mb-3 uppercase tracking-wider">
+              <h3 className="text-[10px] font-display font-semibold text-primary mb-2.5 uppercase tracking-widest">
                 {group.label}
               </h3>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-1">
                 {group.items.map((skill) => (
                   <motion.button
                     key={skill}
-                    className={`px-2.5 py-1 rounded-full text-xs font-body border transition-all cursor-pointer ${
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-body border transition-all cursor-pointer ${
                       activeSkill === skill
-                        ? "border-primary bg-primary/15 text-primary glow-teal"
-                        : "border-border/60 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                        ? "border-primary bg-primary/15 text-primary shadow-[0_0_12px_hsl(168_100%_37%/0.25)]"
+                        : "border-border/50 text-muted-foreground hover:border-primary/40 hover:text-foreground"
                     }`}
-                    whileHover={{ scale: 1.08, y: -3 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ scale: 1.1, y: -2 }}
+                    whileTap={{ scale: 0.92 }}
                     onClick={() => setActiveSkill(activeSkill === skill ? null : skill)}
                     aria-label={`Skill: ${skill}${masteryNotes[skill] ? ` — ${masteryNotes[skill]}` : ""}`}
                   >
@@ -100,15 +100,20 @@ export default function Skills() {
                   </motion.button>
                 ))}
               </div>
-              {group.items.some((s) => s === activeSkill) && activeSkill && masteryNotes[activeSkill] && (
-                <motion.p
-                  className="mt-2.5 text-[11px] text-primary/80 font-body border-l-2 border-primary/30 pl-2"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                >
-                  {masteryNotes[activeSkill]}
-                </motion.p>
-              )}
+
+              <AnimatePresence>
+                {group.items.some((s) => s === activeSkill) && activeSkill && masteryNotes[activeSkill] && (
+                  <motion.p
+                    className="mt-2 text-[10px] text-primary/80 font-body border-l-2 border-primary/30 pl-2"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    {masteryNotes[activeSkill]}
+                  </motion.p>
+                )}
+              </AnimatePresence>
             </motion.div>
           ))}
         </div>
