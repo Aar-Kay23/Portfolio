@@ -1,7 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import { gsap, ScrollTrigger, useGSAP } from "@/lib/gsap";
+import { useState, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Zap, ZapOff } from "lucide-react";
-import { createRipple, removeRipple } from "@/lib/ripple";
 
 const navItems = [
   { label: "About", href: "#about" },
@@ -13,8 +12,6 @@ const navItems = [
 ];
 
 export default function Navigation() {
-  const navRef = useRef<HTMLElement>(null);
-  const indicatorRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState("");
@@ -28,14 +25,26 @@ export default function Navigation() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Track active section with IntersectionObserver
   useEffect(() => {
-    const ids = ["hero", "about", "skills", "experience", "projects", "education", "contact"];
+    const sectionIds = ["hero", "about", "skills", "experience", "projects", "education", "contact"];
     const observers: IntersectionObserver[] = [];
-    ids.forEach((id) => {
+
+    sectionIds.forEach((id) => {
       const el = document.getElementById(id);
       if (!el) return;
       const obs = new IntersectionObserver(
-        ([entry]) => { if (entry.isIntersecting) setActiveSection(id); },
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            setActiveSection(id);
+            // Deep-link hash update
+            if (id !== "hero") {
+              window.history.replaceState(null, "", `#${id}`);
+            } else {
+              window.history.replaceState(null, "", window.location.pathname);
+            }
+          }
+        },
         { rootMargin: "-40% 0px -40% 0px" }
       );
       obs.observe(el);
@@ -44,113 +53,116 @@ export default function Navigation() {
     return () => observers.forEach((o) => o.disconnect());
   }, []);
 
-  useEffect(() => {
-    if (!indicatorRef.current || !navRef.current) return;
-    const link = navRef.current.querySelector(`a[href="#${activeSection}"]`) as HTMLElement;
-    if (link && activeSection !== "hero") {
-      const navRect = navRef.current.getBoundingClientRect();
-      const linkRect = link.getBoundingClientRect();
-      gsap.to(indicatorRef.current, {
-        x: linkRect.left - navRect.left + linkRect.width / 2 - 8,
-        width: 16, autoAlpha: 1, duration: 0.4, ease: "power3.out",
-      });
-    } else {
-      gsap.to(indicatorRef.current, { autoAlpha: 0, duration: 0.3 });
-    }
-  }, [activeSection]);
-
   const toggleLowGPU = useCallback(() => {
     const next = !lowGPU;
     setLowGPU(next);
-    try { localStorage.setItem("lowGPU", String(next)); window.dispatchEvent(new Event("lowgpu-toggle")); } catch {}
+    try {
+      localStorage.setItem("lowGPU", String(next));
+      window.dispatchEvent(new Event("lowgpu-toggle"));
+    } catch {}
   }, [lowGPU]);
 
-  useGSAP(() => {
-    gsap.from(".nav-inner", { y: -20, autoAlpha: 0, duration: 0.8, delay: 0.2 });
-
-    // ── Scroll compression micro-interaction ──────────────
-    const nav = navRef.current;
-    if (!nav) return;
-    let scrollTimer: ReturnType<typeof setTimeout>;
-
-    ScrollTrigger.create({
-      trigger: document.documentElement,
-      start: "top top",
-      end: "bottom bottom",
-      onUpdate: () => {
-        gsap.to(nav, { scaleY: 0.96, duration: 0.3, overwrite: true });
-        clearTimeout(scrollTimer);
-        scrollTimer = setTimeout(() => {
-          gsap.to(nav, { scaleY: 1, duration: 0.5, ease: "elastic.out(1, 0.5)", overwrite: true });
-        }, 150);
-      },
-    });
-  }, { scope: navRef });
-
   return (
-    <nav ref={navRef}
-      className={`fixed top-0 left-0 right-0 z-40 transition-all duration-700 ${
+    <nav
+      className={`fixed top-0 left-0 right-0 z-40 transition-all duration-500 ${
         scrolled
-          ? "backdrop-blur-2xl bg-[rgba(10,8,5,0.7)] border-b border-[rgba(201,168,76,0.06)] shadow-2xl shadow-[rgba(10,8,5,0.5)]"
+          ? "backdrop-blur-2xl bg-background/60 border-b border-border/20 shadow-lg shadow-background/30"
           : "bg-transparent"
-      }`}>
-      <div className="nav-inner max-w-6xl mx-auto px-5 h-14 flex items-center justify-between relative">
-        <a href="#hero" className="font-display font-bold text-foreground text-lg group flex items-center gap-0.5 magnetic-target" data-magnetic="true">
-          <span className="text-[#C9A84C]">R</span>
-          <span className="group-hover:text-[#C9A84C] transition-colors">K</span>
-          <span className="w-1.5 h-1.5 rounded-full bg-[#C9A84C] ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+      }`}
+    >
+      <div className="max-w-6xl mx-auto px-4 h-11 flex items-center justify-between">
+        <a href="#hero" className="font-display font-bold text-foreground text-base group">
+          R<span className="text-primary group-hover:drop-shadow-[0_0_6px_hsl(168_100%_37%/0.6)] transition-all">K</span>
         </a>
 
-        <div className="hidden md:flex items-center gap-0.5 relative">
-          <div ref={indicatorRef} className="absolute bottom-0 h-[2px] rounded-full bg-[#C9A84C]" style={{ visibility: "hidden" }} />
+        {/* Desktop nav */}
+        <div className="hidden md:flex items-center gap-1">
           {navItems.map((item) => {
             const isActive = activeSection === item.href.replace("#", "");
             return (
-              <a key={item.href} href={item.href} data-magnetic="true"
-                className={`relative overflow-hidden px-3 py-1.5 rounded-lg text-xs font-body font-medium transition-all will-change-transform ${
-                  isActive ? "text-[#C9A84C]" : "text-muted-foreground hover:text-foreground"
+              <a
+                key={item.href}
+                href={item.href}
+                className={`px-2.5 py-1 rounded-md text-[11px] font-body transition-all relative ${
+                  isActive
+                    ? "text-primary bg-primary/8"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
                 }`}
-                onMouseEnter={(e) => createRipple(e, e.currentTarget)}
-                onMouseLeave={(e) => removeRipple(e.currentTarget.querySelector('.ripple-drop'))}>
-                <span className="relative z-10">{item.label}</span>
+              >
+                {item.label}
+                {isActive && (
+                  <motion.div
+                    className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3 h-[2px] rounded-full bg-primary"
+                    layoutId="nav-indicator"
+                    transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                  />
+                )}
               </a>
             );
           })}
-          <button onClick={toggleLowGPU} data-magnetic="true"
-            className={`ml-3 p-2 rounded-lg text-xs transition-all ${lowGPU ? "text-[#C9A84C] bg-[rgba(201,168,76,0.1)]" : "text-muted-foreground hover:text-foreground"}`}
-            aria-label={lowGPU ? "Enable 3D effects" : "Low GPU mode"}>
-            {lowGPU ? <ZapOff className="w-4 h-4" /> : <Zap className="w-4 h-4" />}
+
+          {/* Low GPU toggle */}
+          <button
+            onClick={toggleLowGPU}
+            className={`ml-3 p-1.5 rounded-md text-xs transition-all ${
+              lowGPU ? "text-accent bg-accent/10" : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+            }`}
+            aria-label={lowGPU ? "Enable 3D effects" : "Disable 3D effects for performance"}
+            title={lowGPU ? "Enable 3D" : "Low GPU mode"}
+          >
+            {lowGPU ? <ZapOff className="w-3.5 h-3.5" /> : <Zap className="w-3.5 h-3.5" />}
           </button>
         </div>
 
+        {/* Mobile toggle */}
         <div className="flex md:hidden items-center gap-2">
-          <button onClick={toggleLowGPU} className={`p-2 rounded-lg ${lowGPU ? "text-[#C9A84C]" : "text-muted-foreground"}`}>
+          <button
+            onClick={toggleLowGPU}
+            className={`p-1.5 rounded-md ${lowGPU ? "text-accent" : "text-muted-foreground"}`}
+            aria-label={lowGPU ? "Enable 3D" : "Low GPU mode"}
+          >
             {lowGPU ? <ZapOff className="w-4 h-4" /> : <Zap className="w-4 h-4" />}
           </button>
-          <button onClick={() => setOpen(!open)} aria-label={open ? "Close" : "Open"} className="text-foreground p-1" data-magnetic="true">
+          <button
+            onClick={() => setOpen(!open)}
+            aria-label={open ? "Close menu" : "Open menu"}
+            className="text-foreground"
+          >
             {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
       </div>
 
-      {open && (
-        <div className="md:hidden bg-[rgba(10,8,5,0.95)] backdrop-blur-2xl border-b border-[rgba(201,168,76,0.06)]">
-          <div className="px-4 py-3 space-y-1">
-            {navItems.map((item) => {
-              const isActive = activeSection === item.href.replace("#", "");
-              return (
-                <a key={item.href} href={item.href}
-                  className={`relative overflow-hidden block px-4 py-2.5 rounded-xl text-sm font-body font-medium ${isActive ? "text-[#C9A84C] bg-[rgba(201,168,76,0.06)]" : "text-muted-foreground hover:text-[#C9A84C]"}`}
-                  onClick={() => setOpen(false)}
-                  onMouseEnter={(e) => createRipple(e, e.currentTarget)}
-                  onMouseLeave={(e) => removeRipple(e.currentTarget.querySelector('.ripple-drop'))}>
-                  <span className="relative z-10">{item.label}</span>
-                </a>
-              );
-            })}
-          </div>
-        </div>
-      )}
+      {/* Mobile menu */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            className="md:hidden bg-background/95 backdrop-blur-2xl border-b border-border/30"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+          >
+            <div className="px-4 py-3 space-y-1">
+              {navItems.map((item) => {
+                const isActive = activeSection === item.href.replace("#", "");
+                return (
+                  <a
+                    key={item.href}
+                    href={item.href}
+                    className={`block px-3 py-2 rounded-lg text-sm font-body transition-colors ${
+                      isActive ? "text-primary bg-primary/8" : "text-muted-foreground hover:text-primary"
+                    }`}
+                    onClick={() => setOpen(false)}
+                  >
+                    {item.label}
+                  </a>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 }

@@ -16,10 +16,9 @@ export default {
       fontFamily: {
         display: ["Poppins", "sans-serif"],
         body: ["IBM Plex Sans", "sans-serif"],
-        mono: ["JetBrains Mono", "monospace"],
       },
       colors: {
-        border: "rgba(201, 168, 76, 0.12)",
+        border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
@@ -52,7 +51,23 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        gold: "#C9A84C",
+        sidebar: {
+          DEFAULT: "hsl(var(--sidebar-background))",
+          foreground: "hsl(var(--sidebar-foreground))",
+          primary: "hsl(var(--sidebar-primary))",
+          "primary-foreground": "hsl(var(--sidebar-primary-foreground))",
+          accent: "hsl(var(--sidebar-accent))",
+          "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
+          border: "hsl(var(--sidebar-border))",
+          ring: "hsl(var(--sidebar-ring))",
+        },
+        navy: {
+          deep: "hsl(var(--navy-deep))",
+          mid: "hsl(var(--navy-mid))",
+        },
+        slate: {
+          body: "hsl(var(--slate-body))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
