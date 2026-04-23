@@ -4,75 +4,91 @@
 
 @layer base {
   :root {
-    --background: 218 45% 10%;
-    --foreground: 210 20% 98%;
-
-    --card: 218 40% 13%;
-    --card-foreground: 210 20% 98%;
-
-    --popover: 218 40% 13%;
-    --popover-foreground: 210 20% 98%;
-
-    --primary: 168 100% 37%;
-    --primary-foreground: 218 45% 10%;
-
-    --secondary: 218 30% 18%;
-    --secondary-foreground: 210 20% 85%;
-
-    --muted: 218 25% 16%;
-    --muted-foreground: 213 20% 70%;
-
-    --accent: 15 100% 67%;
-    --accent-foreground: 218 45% 10%;
-
+    /* ── Warm editorial dark palette ────────────────────── */
+    --background: 30 20% 3%;         /* #0A0805 */
+    --foreground: 38 28% 92%;        /* #F0EBE1 */
+    --card: 36 18% 5%;              /* #111008 */
+    --card-foreground: 38 28% 92%;
+    --popover: 36 18% 5%;
+    --popover-foreground: 38 28% 92%;
+    --primary: 44 55% 54%;           /* #C9A84C — warm gold */
+    --primary-foreground: 30 20% 3%;
+    --secondary: 38 15% 8%;         /* #1A1610 */
+    --secondary-foreground: 35 15% 55%;
+    --muted: 36 12% 7%;
+    --muted-foreground: 33 12% 48%; /* #8A7F6E */
+    --accent: 44 55% 54%;
+    --accent-foreground: 30 20% 3%;
     --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 218 25% 20%;
-    --input: 218 25% 20%;
-    --ring: 168 100% 37%;
-
+    --destructive-foreground: 38 28% 92%;
+    --border: 44 55% 54% / 0.12;    /* barely visible gold tint */
+    --input: 36 12% 10%;
+    --ring: 44 55% 54%;
     --radius: 0.75rem;
-
-    --sidebar-background: 218 40% 8%;
-    --sidebar-foreground: 210 20% 85%;
-    --sidebar-primary: 168 100% 37%;
-    --sidebar-primary-foreground: 218 45% 10%;
-    --sidebar-accent: 218 30% 18%;
-    --sidebar-accent-foreground: 210 20% 85%;
-    --sidebar-border: 218 25% 20%;
-    --sidebar-ring: 168 100% 37%;
-
-    /* Custom tokens */
-    --glow-teal: 168 100% 37%;
-    --glow-orange: 15 100% 67%;
-    --navy-deep: 218 45% 7%;
-    --navy-mid: 218 40% 13%;
-    --slate-body: 213 20% 78%;
+    --gold: #C9A84C;
+    --gold-rgb: 201 168 76;
   }
 }
 
 @layer base {
+  * { @apply border-border; }
+
+  html { /* Lenis handles scroll */ }
+
+  /* ── Global cursor:none — hides native cursor everywhere ─ */
   * {
-    @apply border-border;
+    cursor: none !important;
   }
 
-  html {
-    scroll-behavior: smooth;
+  .custom-cursor-dot,
+  .custom-cursor-ring {
+    position: fixed !important;
+    z-index: 2147483647 !important;
+    pointer-events: none !important;
+    top: 0;
+    left: 0;
   }
 
   body {
     @apply bg-background text-foreground font-body antialiased;
+    overflow-x: hidden;
+    background-color: #0A0805; /* Fix 3: explicit bg prevents black flash */
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-display;
+  h1, h2, h3, h4, h5, h6 { @apply font-display; }
+
+  ::selection {
+    background: rgba(201, 168, 76, 0.25);
+    color: #F0EBE1;
   }
 
+  /* ── Custom scrollbar ────────────────────────────────── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: #0A0805; }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(201, 168, 76, 0.2);
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(201, 168, 76, 0.4);
+  }
+
+  /* ── Film grain / noise overlay (Phase 11) ───────────── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+    pointer-events: none;
+    opacity: 0.04;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 180px 180px;
+  }
+
+  /* ── Reduced motion ──────────────────────────────────── */
   @media (prefers-reduced-motion: reduce) {
-    html {
-      scroll-behavior: auto;
-    }
+    html { scroll-behavior: auto; }
     *, *::before, *::after {
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
@@ -82,24 +98,129 @@
 }
 
 @layer utilities {
+  /* ── Gradients — warm gold ───────────────────────────── */
   .text-gradient-teal {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, hsl(var(--primary)), hsl(168 80% 55%));
+    background-image: linear-gradient(135deg, #C9A84C, #D4B96A);
   }
 
-  .glow-teal {
-    box-shadow: 0 0 20px hsl(var(--glow-teal) / 0.3), 0 0 60px hsl(var(--glow-teal) / 0.1);
+  .text-gradient-multi {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, #C9A84C, #D4B96A, #A88B35);
   }
 
-  .glow-orange {
-    box-shadow: 0 0 15px hsl(var(--glow-orange) / 0.3);
-  }
-
+  /* ── Glass cards — warm tones ────────────────────────── */
   .glass-card {
-    @apply bg-card/60 backdrop-blur-xl border border-border/50 rounded-xl;
+    background: rgba(17, 16, 8, 0.6);
+    backdrop-filter: blur(20px) saturate(150%);
+    border: 1px solid rgba(201, 168, 76, 0.06);
+    border-radius: var(--radius);
+    transition: border-color 0.4s ease, box-shadow 0.4s ease, transform 0.4s ease;
+  }
+  .glass-card:hover {
+    border-color: rgba(201, 168, 76, 0.12);
+    box-shadow: 0 0 40px rgba(201, 168, 76, 0.03);
   }
 
-  .section-padding {
-    @apply py-20 md:py-32 px-4 md:px-8;
+  .glass-card-glow {
+    @apply glass-card;
+    box-shadow:
+      0 0 0 1px rgba(201, 168, 76, 0.04),
+      0 8px 40px rgba(201, 168, 76, 0.03),
+      inset 0 1px 0 rgba(240, 235, 225, 0.02);
   }
+
+  /* ── Section utilities ───────────────────────────────── */
+  .section-padding { @apply py-24 md:py-32 px-5 md:px-8; }
+
+  .section-heading {
+    @apply text-3xl sm:text-4xl md:text-5xl font-display font-bold text-foreground mb-4;
+  }
+  .section-subheading {
+    @apply text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto mb-14 leading-relaxed;
+  }
+
+  /* ── Text reveal (Phase 6) ───────────────────────────── */
+  .line-reveal { overflow: hidden; }
+  .line-reveal-inner {
+    display: block;
+    transform: translateY(105%);
+    will-change: transform;
+  }
+
+  /* ── Animated gradient border — warm gold ────────────── */
+  .gradient-border { position: relative; overflow: hidden; }
+  .gradient-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    border-radius: inherit;
+    background: linear-gradient(135deg,
+      rgba(201, 168, 76, 0.3),
+      rgba(212, 185, 106, 0.15),
+      rgba(168, 139, 53, 0.15),
+      rgba(201, 168, 76, 0.3)
+    );
+    background-size: 300% 300%;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: gradient-rotate 4s ease infinite;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+  }
+  .gradient-border:hover::before { opacity: 1; }
+
+  @keyframes gradient-rotate {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* ── Active card glow pulse (Phase 7 — CSS only) ─────── */
+  .card-glow-active {
+    animation: glow-pulse 2s ease-in-out infinite;
+  }
+  @keyframes glow-pulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(201, 168, 76, 0.05); }
+    50% { box-shadow: 0 0 40px rgba(201, 168, 76, 0.12); }
+  }
+
+  /* ── Liquid glass cursor style ───────────────────────── */
+  .liquid-glass {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15);
+  }
+
+  /* ── Ambient watermark text ──────────────────────────── */
+  .watermark {
+    position: absolute;
+    pointer-events: none;
+    user-select: none;
+    font-family: var(--font-display, 'Poppins', sans-serif);
+    font-weight: 800;
+    line-height: 1;
+    color: rgba(201, 168, 76, 0.03);
+  }
+
+  /* ── Pulsing "live" dot ──────────────────────────────── */
+  .pulse-live {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #4ade80;
+    animation: pulse-live-anim 2s ease-in-out infinite;
+  }
+  @keyframes pulse-live-anim {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.5); }
+    50% { box-shadow: 0 0 0 6px rgba(74, 222, 128, 0); }
+  }
+
+  /* ── Visibility helpers ──────────────────────────────── */
+  .gsap-hidden { visibility: hidden; }
 }
