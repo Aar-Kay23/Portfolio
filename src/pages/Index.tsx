@@ -30,7 +30,7 @@ const Index = () => {
           fallback={
             <div
               className="fixed inset-0 -z-10"
-              style={{ background: "radial-gradient(ellipse at 50% 30%, #141f30 0%, #0a1018 70%)" }}
+              style={{ background: "radial-gradient(ellipse at 50% 30%, hsl(232 32% 14%) 0%, hsl(230 35% 5%) 70%)" }}
             />
           }
         >
@@ -40,14 +40,18 @@ const Index = () => {
         <div
           className="fixed inset-0 -z-10"
           style={{
-            background: "radial-gradient(ellipse at 50% 30%, hsl(218 40% 13%) 0%, hsl(218 45% 7%) 70%)",
+            background: "radial-gradient(ellipse at 50% 30%, hsl(232 32% 14%) 0%, hsl(230 35% 5%) 70%)",
           }}
         />
       )}
 
+      {/* Atmospheric overlays */}
+      <div className="vignette" aria-hidden="true" />
+      <div className="film-grain" aria-hidden="true" />
+
       <Navigation />
 
-      <main>
+      <main className="relative z-10">
         <Hero />
         <About />
         <Skills />
@@ -66,10 +70,11 @@ const Index = () => {
 
 function ScrollProgress() {
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 h-[2px]">
+    <div className="fixed top-0 left-0 right-0 z-50 h-[2px] bg-foreground/5">
       <div
-        className="h-full bg-primary/50 transition-none"
+        className="h-full transition-none"
         id="scroll-progress"
+        style={{ background: "linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)))" }}
         ref={(el) => {
           if (!el) return;
           const update = () => {

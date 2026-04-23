@@ -42,12 +42,12 @@ export default function DynamicLights({ progress }: { progress: number }) {
 
   return (
     <>
-      <ambientLight intensity={0.1} color="#1a2a40" />
-      <pointLight ref={keyRef} color="#00BFA6" distance={30} decay={2} />
-      <pointLight ref={fillRef} color="#4dd0e1" distance={22} decay={2} />
-      <pointLight ref={rimRef} color="#80cbc4" distance={24} decay={2} />
-      <pointLight ref={warmRef} color="#FF7A59" distance={20} decay={2} />
-      <pointLight ref={depthRef} color="#00BFA6" distance={40} decay={1.5} />
+      <ambientLight intensity={0.12} color="#1e1a3a" />
+      <pointLight ref={keyRef} color="#16e8c7" distance={32} decay={2} />
+      <pointLight ref={fillRef} color="#9b6dff" distance={24} decay={2} />
+      <pointLight ref={rimRef} color="#5fe3d3" distance={26} decay={2} />
+      <pointLight ref={warmRef} color="#ff8a4c" distance={20} decay={2} />
+      <pointLight ref={depthRef} color="#16e8c7" distance={42} decay={1.5} />
     </>
   );
 }
