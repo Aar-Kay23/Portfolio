@@ -108,10 +108,14 @@
     background: linear-gradient(180deg, hsl(var(--primary)), hsl(var(--accent)));
   }
 
-  /* Custom cursor — hide native when active (desktop only) */
-  html.custom-cursor-active,
-  html.custom-cursor-active * {
-    cursor: none !important;
+  /* Custom cursor — hide native when active (desktop only).
+     Use @media (hover: hover) so touch devices keep their native cursor. */
+  @media (hover: hover) and (pointer: fine) {
+    html.custom-cursor-active,
+    html.custom-cursor-active body,
+    html.custom-cursor-active * {
+      cursor: none !important;
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
