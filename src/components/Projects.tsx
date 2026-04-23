@@ -60,19 +60,19 @@ export default function Projects() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
-          Featured <span className="text-gradient-teal">Projects</span>
+          Featured <span className="text-gradient-accent">Projects</span>
         </motion.h2>
 
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {projects.map((project, i) => (
             <motion.div
               key={project.id}
-              className="glass-card p-4 cursor-pointer group hover:border-primary/25 transition-all relative overflow-hidden"
+              className="glass-card gradient-border p-4 cursor-pointer group hover:border-primary/40 relative overflow-hidden"
               initial={{ opacity: 0, y: 30, filter: "blur(6px)" }}
               whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.08, duration: 0.6 }}
-              whileHover={{ y: -6, scale: 1.02, rotateX: 2, rotateY: -1 }}
+              whileHover={{ y: -8, scale: 1.02, rotateX: 3, rotateY: -2 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => setActiveProject(i)}
               role="button"
@@ -86,7 +86,7 @@ export default function Projects() {
               {/* Glow on hover */}
               <div
                 className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"
-                style={{ background: "radial-gradient(circle at 50% 0%, hsl(168 100% 37% / 0.1) 0%, transparent 70%)" }}
+                style={{ background: "radial-gradient(circle at 50% 0%, hsl(var(--accent) / 0.18) 0%, hsl(var(--primary) / 0.1) 35%, transparent 70%)" }}
               />
               <div className="relative z-10">
                 <div className="flex items-center justify-between mb-1.5">

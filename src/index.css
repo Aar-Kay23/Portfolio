@@ -4,51 +4,62 @@
 
 @layer base {
   :root {
-    --background: 218 45% 10%;
-    --foreground: 210 20% 98%;
+    /* Modern editorial dark theme — deep indigo canvas, electric teal primary, violet accent */
+    --background: 230 35% 6%;
+    --foreground: 220 30% 97%;
 
-    --card: 218 40% 13%;
-    --card-foreground: 210 20% 98%;
+    --card: 232 32% 10%;
+    --card-foreground: 220 30% 97%;
 
-    --popover: 218 40% 13%;
-    --popover-foreground: 210 20% 98%;
+    --popover: 232 32% 10%;
+    --popover-foreground: 220 30% 97%;
 
-    --primary: 168 100% 37%;
-    --primary-foreground: 218 45% 10%;
+    --primary: 172 90% 50%;
+    --primary-foreground: 230 40% 8%;
+    --primary-glow: 168 95% 62%;
 
-    --secondary: 218 30% 18%;
-    --secondary-foreground: 210 20% 85%;
+    --secondary: 232 28% 14%;
+    --secondary-foreground: 220 25% 88%;
 
-    --muted: 218 25% 16%;
-    --muted-foreground: 213 20% 70%;
+    --muted: 232 22% 13%;
+    --muted-foreground: 220 16% 68%;
 
-    --accent: 15 100% 67%;
-    --accent-foreground: 218 45% 10%;
+    --accent: 268 90% 70%;
+    --accent-foreground: 230 40% 8%;
+    --accent-warm: 22 95% 65%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 220 30% 97%;
 
-    --border: 218 25% 20%;
-    --input: 218 25% 20%;
-    --ring: 168 100% 37%;
+    --border: 232 22% 18%;
+    --input: 232 22% 18%;
+    --ring: 172 90% 50%;
 
-    --radius: 0.75rem;
+    --radius: 0.875rem;
 
-    --sidebar-background: 218 40% 8%;
-    --sidebar-foreground: 210 20% 85%;
-    --sidebar-primary: 168 100% 37%;
-    --sidebar-primary-foreground: 218 45% 10%;
-    --sidebar-accent: 218 30% 18%;
-    --sidebar-accent-foreground: 210 20% 85%;
-    --sidebar-border: 218 25% 20%;
-    --sidebar-ring: 168 100% 37%;
+    --sidebar-background: 232 35% 7%;
+    --sidebar-foreground: 220 25% 88%;
+    --sidebar-primary: 172 90% 50%;
+    --sidebar-primary-foreground: 230 40% 8%;
+    --sidebar-accent: 232 28% 14%;
+    --sidebar-accent-foreground: 220 25% 88%;
+    --sidebar-border: 232 22% 18%;
+    --sidebar-ring: 172 90% 50%;
 
     /* Custom tokens */
-    --glow-teal: 168 100% 37%;
-    --glow-orange: 15 100% 67%;
-    --navy-deep: 218 45% 7%;
-    --navy-mid: 218 40% 13%;
-    --slate-body: 213 20% 78%;
+    --glow-teal: 172 90% 50%;
+    --glow-violet: 268 90% 70%;
+    --glow-orange: 22 95% 65%;
+    --navy-deep: 232 38% 5%;
+    --navy-mid: 232 32% 10%;
+    --slate-body: 220 18% 78%;
+
+    /* Composed gradients & shadows */
+    --gradient-primary: linear-gradient(135deg, hsl(172 90% 50%), hsl(168 95% 62%));
+    --gradient-accent: linear-gradient(135deg, hsl(268 90% 70%), hsl(172 90% 50%));
+    --gradient-radial: radial-gradient(ellipse at 50% 0%, hsl(232 32% 14% / 0.9) 0%, hsl(230 35% 6% / 0) 70%);
+    --shadow-elegant: 0 20px 60px -20px hsl(172 90% 50% / 0.25), 0 8px 24px -12px hsl(0 0% 0% / 0.5);
+    --shadow-deep: 0 30px 80px -30px hsl(0 0% 0% / 0.7);
   }
 }
 
@@ -63,10 +74,44 @@
 
   body {
     @apply bg-background text-foreground font-body antialiased;
+    background-image:
+      radial-gradient(1200px 600px at 15% -10%, hsl(268 60% 22% / 0.35), transparent 60%),
+      radial-gradient(1000px 700px at 110% 20%, hsl(172 80% 25% / 0.25), transparent 60%),
+      radial-gradient(900px 600px at 50% 110%, hsl(232 50% 12% / 0.5), transparent 70%);
+    background-attachment: fixed;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-display;
+    @apply font-display tracking-tight;
+  }
+
+  /* Selection */
+  ::selection {
+    background: hsl(var(--primary) / 0.35);
+    color: hsl(var(--foreground));
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+  }
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, hsl(var(--primary) / 0.5), hsl(var(--accent) / 0.5));
+    border-radius: 8px;
+    border: 2px solid hsl(var(--background));
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, hsl(var(--primary)), hsl(var(--accent)));
+  }
+
+  /* Custom cursor — hide native when active (desktop only) */
+  html.custom-cursor-active,
+  html.custom-cursor-active * {
+    cursor: none !important;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -84,22 +129,106 @@
 @layer utilities {
   .text-gradient-teal {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, hsl(var(--primary)), hsl(168 80% 55%));
+    background-image: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+  }
+
+  .text-gradient-accent {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--primary)));
   }
 
   .glow-teal {
-    box-shadow: 0 0 20px hsl(var(--glow-teal) / 0.3), 0 0 60px hsl(var(--glow-teal) / 0.1);
+    box-shadow: 0 0 24px hsl(var(--glow-teal) / 0.35), 0 0 64px hsl(var(--glow-teal) / 0.12);
+  }
+
+  .glow-violet {
+    box-shadow: 0 0 24px hsl(var(--glow-violet) / 0.4), 0 0 64px hsl(var(--glow-violet) / 0.15);
   }
 
   .glow-orange {
-    box-shadow: 0 0 15px hsl(var(--glow-orange) / 0.3);
+    box-shadow: 0 0 18px hsl(var(--glow-orange) / 0.35);
   }
 
+  /* Premium glass — layered: subtle gradient fill, inner highlight, outer shadow */
   .glass-card {
-    @apply bg-card/60 backdrop-blur-xl border border-border/50 rounded-xl;
+    position: relative;
+    background:
+      linear-gradient(180deg, hsl(232 32% 14% / 0.6) 0%, hsl(232 32% 10% / 0.55) 100%);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    border: 1px solid hsl(var(--border) / 0.7);
+    border-radius: var(--radius);
+    box-shadow:
+      inset 0 1px 0 0 hsl(220 30% 97% / 0.06),
+      inset 0 -1px 0 0 hsl(0 0% 0% / 0.3),
+      0 8px 24px -12px hsl(0 0% 0% / 0.5);
+    transition: border-color 300ms ease, box-shadow 300ms ease, transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .glass-card:hover {
+    border-color: hsl(var(--primary) / 0.35);
+    box-shadow:
+      inset 0 1px 0 0 hsl(220 30% 97% / 0.08),
+      inset 0 -1px 0 0 hsl(0 0% 0% / 0.3),
+      0 12px 32px -12px hsl(var(--primary) / 0.25),
+      0 8px 24px -12px hsl(0 0% 0% / 0.5);
   }
 
   .section-padding {
     @apply py-20 md:py-32 px-4 md:px-8;
+  }
+
+  /* Vignette overlay — adds film-like depth */
+  .vignette {
+    pointer-events: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    background:
+      radial-gradient(ellipse at center, transparent 50%, hsl(var(--navy-deep) / 0.6) 100%);
+  }
+
+  /* Subtle film grain */
+  .film-grain {
+    pointer-events: none;
+    position: fixed;
+    inset: 0;
+    z-index: 2;
+    opacity: 0.04;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* Animated gradient border (used on featured cards) */
+  .gradient-border {
+    position: relative;
+  }
+  .gradient-border::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.6), hsl(var(--accent) / 0.6), hsl(var(--primary) / 0.6));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
+    pointer-events: none;
+    opacity: 0.5;
+    transition: opacity 300ms ease;
+  }
+  .gradient-border:hover::before {
+    opacity: 1;
+  }
+
+  /* Micro animations */
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  .shimmer {
+    background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.2), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 2.5s linear infinite;
   }
 }

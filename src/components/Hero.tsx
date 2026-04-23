@@ -43,19 +43,24 @@ export default function Hero() {
               >
                 {/* Front */}
                 <div
-                  className="absolute inset-0 glass-card glow-teal p-5 flex flex-col justify-center items-center text-center"
+                  className="absolute inset-0 glass-card gradient-border glow-teal p-5 flex flex-col justify-center items-center text-center overflow-hidden"
                   style={{ backfaceVisibility: "hidden" }}
                 >
+                  <div
+                    className="absolute -top-12 -right-12 w-32 h-32 rounded-full opacity-40 blur-2xl"
+                    style={{ background: "radial-gradient(circle, hsl(var(--accent) / 0.6), transparent 70%)" }}
+                    aria-hidden="true"
+                  />
                   <motion.div
-                    className="w-12 h-12 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center mb-2.5"
+                    className="w-12 h-12 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center mb-2.5 relative z-10"
                     animate={{ scale: [1, 1.05, 1] }}
                     transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
                   >
                     <span className="text-lg font-display font-bold text-primary">RK</span>
                   </motion.div>
-                  <h1 className="text-base sm:text-lg font-display font-bold text-foreground">RAJ Khandelwal</h1>
-                  <p className="text-[11px] text-primary font-medium mt-0.5">Software Engineer (Gen-AI & Computer Vision)</p>
-                  <p className="text-[9px] text-muted-foreground mt-1.5 opacity-60">Click to flip</p>
+                  <h1 className="text-base sm:text-lg font-display font-bold text-foreground relative z-10">RAJ Khandelwal</h1>
+                  <p className="text-[11px] text-primary font-medium mt-0.5 relative z-10">Software Engineer (Gen-AI & Computer Vision)</p>
+                  <p className="text-[9px] text-muted-foreground mt-1.5 opacity-60 relative z-10">Click to flip</p>
                 </div>
 
                 {/* Back */}
@@ -89,7 +94,7 @@ export default function Hero() {
             transition={{ delay: 0.3, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
           >
             <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-display font-bold text-foreground leading-tight">
-              Hi, I'm <span className="text-gradient-teal">RAJ Khandelwal</span>
+              Hi, I'm <span className="text-gradient-accent">RAJ Khandelwal</span>
             </h2>
             <p className="mt-2 text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-md">
               Building production-grade AI systems, real-time video analytics, and scalable backend platforms.

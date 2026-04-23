@@ -69,9 +69,9 @@ export default function CinematicBackground() {
         camera={{ position: [0, 2, 12], fov: 45, near: 0.1, far: 200 }}
         dpr={[1, 1.5]}
         gl={{ antialias: false, alpha: false, powerPreference: "high-performance" }}
-        style={{ background: "linear-gradient(180deg, #0F1724 0%, #080d16 40%, #0a1220 100%)" }}
+        style={{ background: "radial-gradient(ellipse at 50% 0%, #1a1530 0%, #0a0e1c 45%, #050810 100%)" }}
       >
-        <fog attach="fog" args={["#0F1724", 15, 50]} />
+        <fog attach="fog" args={["#0a0e1c", 15, 50]} />
 
         {/* Camera & atmosphere */}
         <ScrollCamera progress={scrollProgress} />
